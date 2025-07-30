@@ -129,7 +129,7 @@
       <h1>Radioactive Decay Calculator</h1>
       <form id="decay-form">
         <label for="initial-activity">Initial Activity (MBq):</label>
-        <input type="number" id="initial-activity" required />
+        <input type="number" inputmode="decimal" id="initial-activity" required />
 
         <label for="decay-mode">Decay Mode:</label>
         <select id="decay-mode">
@@ -144,7 +144,7 @@
         <select id="rp-decay-select" style="display:none;" required></select>
 
         <label for="time-elapsed">Time Elapsed:</label>
-        <input type="number" id="time-elapsed" required />
+        <input type="number" inputmode="decimal" id="time-elapsed" required />
 
         <label for="time-unit">Time Unit:</label>
         <select id="time-unit" required>
@@ -165,16 +165,16 @@
       <h1>Dose Rate Calculator</h1>
       <form id="dose-form">
         <label for="dose-activity">Source Activity (MBq):</label>
-        <input type="number" id="dose-activity" required />
+        <input type="number" inputmode="decimal" id="dose-activity" required />
 
         <label for="dose-distance">Distance from Source (m):</label>
-        <input type="number" id="dose-distance" required />
+        <input type="number" inputmode="decimal" id="dose-distance" required />
 
         <label for="dose-isotope">Select Isotope:</label>
         <select id="dose-isotope" required></select>
 
         <label for="exposure-time">Time of Exposure:</label>
-        <input type="number" id="exposure-time" required />
+        <input type="number" inputmode="decimal" id="exposure-time" required />
 
         <label for="exposure-unit">Exposure Time Unit:</label>
         <select id="exposure-unit" required>
@@ -188,7 +188,7 @@
           <label for="shield-material">Shielding Material:</label>
           <select id="shield-material" required></select>
           <label for="shield-thickness">Thickness:</label>
-          <input type="number" id="shield-thickness" min="0" />
+          <input type="number" inputmode="decimal" id="shield-thickness" min="0" />
           <label for="shield-unit">Shielding Thickness Unit:</label>
           <select id="shield-unit">
             <option value="mm" selected>mm</option>
@@ -221,7 +221,7 @@
         <select id="to-unit" required></select>
     
         <label for="conversion-value">Value:</label>
-        <input type="number" id="conversion-value" required />
+        <input type="number" inputmode="decimal" id="conversion-value" required />
     
         <button type="submit">Convert</button>
       </form>
@@ -238,7 +238,7 @@
       <label for="pd-rp-select">Select Radiopharmaceutical:</label>
       <select id="pd-rp-select" required></select>
       <label for="pd-activity">Administered Activity (MBq):</label>
-      <input type="number" id="pd-activity" required />
+      <input type="number" inputmode="decimal" id="pd-activity" required />
       <button type="button" id="calc-patient">Calculate Effective Dose</button>
       <div id="patient-result"></div>
     </section>
