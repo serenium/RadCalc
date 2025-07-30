@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radcalc-shell-v1';
+const CACHE_NAME = 'radcalc-shell-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -29,14 +29,29 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // App shell navigation — network first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(resp => {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
+          return resp;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Other assets — stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then(cached => {
-      return cached || fetch(event.request).then(response => {
-        // Optionally cache new resources here:
-        // const copy = response.clone();
-        // caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      });
+      const networkFetch = fetch(event.request).then(resp => {
+        const copy = resp.clone();
+        caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
+        return resp;
+      }).catch(() => {});
+      return cached || networkFetch;
     })
   );
 });
