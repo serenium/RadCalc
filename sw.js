@@ -1,4 +1,4 @@
-const CACHE_NAME = 'radcalc-shell-v3';
+const CACHE_NAME = 'radcalc-shell-v4';
 const ASSETS = [
   '/',
   '/index.html',
