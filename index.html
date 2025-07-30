@@ -53,6 +53,19 @@
       margin-bottom: var(--spacing);
     }
 
+    .title-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: var(--spacing);
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+    }
+
     .card {
       background-color: var(--card-bg);
       color: var(--card-text);
@@ -112,7 +125,10 @@
     <!-- Calculator Selector                                                        -->
     <!-- ========================================================================= -->
     <header class="header">
-      <h1>Radiation Calculator</h1>
+      <div class="title-container">
+        <img src="icon-192.png" alt="RadCalc Icon" class="app-icon">
+        <h1>RadCalc</h1>
+      </div>
       <label for="calculator-select">Select Calculator:</label>
       <select id="calculator-select">
         <option value="decay">Radioactive Decay</option>
