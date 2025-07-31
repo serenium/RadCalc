@@ -259,7 +259,7 @@
         <label for="chain-parent">Parent Isotope:</label>
         <select id="chain-parent" required></select>
         <label for="chain-daughter">Daughter Isotope:</label>
-        <select id="chain-daughter" required></select>
+        <input type="text" id="chain-daughter" readonly style="background:#eee; color:#888;" />
         <label for="chain-activity">Initial Parent Activity (MBq):</label>
         <input type="number" id="chain-activity" inputmode="numeric" pattern="[0-9]*" required />
         <label for="chain-time">Time Elapsed:</label>
@@ -574,38 +574,42 @@
 
     // Populate parent/daughter dropdowns
     const chainParentSelect = document.getElementById('chain-parent');
-    const chainDaughterSelect = document.getElementById('chain-daughter');
-    Object.keys(isotopes).forEach(key => {
-      const optionP = document.createElement('option');
-      optionP.value = key;
-      optionP.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      chainParentSelect.appendChild(optionP);
-      const optionD = document.createElement('option');
-      optionD.value = key;
-      optionD.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      chainDaughterSelect.appendChild(optionD);
-    });
-
-    // Auto-select daughter when parent changes
-    chainParentSelect.addEventListener('change', () => {
-      const parent = chainParentSelect.value;
-      if (decayChainMap[parent]) {
-        chainDaughterSelect.value = decayChainMap[parent];
+    const chainDaughterInput = document.getElementById('chain-daughter');
+    // Only show parents with valid daughters
+    Object.keys(decayChainMap).forEach(parentKey => {
+      if (isotopes[parentKey]) {
+        const optionP = document.createElement('option');
+        optionP.value = parentKey;
+        optionP.text = `${parentKey} (${formatHalfLife(isotopes[parentKey].halfLife)})`;
+        chainParentSelect.appendChild(optionP);
       }
     });
+
+    // Set initial daughter value
+    function updateChainDaughter() {
+      const parent = chainParentSelect.value;
+      if (decayChainMap[parent] && isotopes[decayChainMap[parent]]) {
+        chainDaughterInput.value = `${decayChainMap[parent]} (${formatHalfLife(isotopes[decayChainMap[parent]].halfLife)})`;
+      } else {
+        chainDaughterInput.value = '';
+      }
+    }
+    chainParentSelect.addEventListener('change', updateChainDaughter);
+    // Set on load
+    updateChainDaughter();
 
     // Chain calculation and graphing
     document.getElementById('chain-form').addEventListener('submit', function(event) {
       event.preventDefault();
       const parentIso = chainParentSelect.value;
-      const daughterIso = chainDaughterSelect.value;
+      const daughterIso = decayChainMap[parentIso];
       const A0 = parseFloat(document.getElementById('chain-activity').value);
       let t = parseFloat(document.getElementById('chain-time').value);
       const unit = document.getElementById('chain-time-unit').value;
       if (unit === 'minutes') t /= 60;
       else if (unit === 'days') t *= 24;
       if (!parentIso || !daughterIso || isNaN(A0) || isNaN(t) || parentIso === daughterIso) {
-        document.getElementById('chain-result').innerText = "Please select different isotopes and enter valid values.";
+        document.getElementById('chain-result').innerText = "Please select a valid parent isotope and enter valid values.";
         document.getElementById('chain-graph').innerHTML = '';
         return;
       }
