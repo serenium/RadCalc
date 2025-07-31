@@ -597,16 +597,16 @@
     };
 
     // --- Isotope and Material Dropdowns ---
+    const isotopeDropdownIds = [
+      'isotope',
+      'dose-isotope',
+      'reverse-isotope',
+      'shielding-isotope',
+      'unshielded-isotope',
+      'chain-parent'
+    ];
     function populateAllDropdowns() {
       // Isotope dropdowns
-      const isotopeDropdownIds = [
-        'isotope',
-        'dose-isotope',
-        'reverse-isotope',
-        'shielding-isotope',
-        'unshielded-isotope',
-        'chain-parent'
-      ];
       isotopeDropdownIds.forEach(id => {
         const select = document.getElementById(id);
         if (select) {
@@ -628,7 +628,8 @@
       // Material dropdowns
       const materialDropdownIds = [
         'shielding-material',
-        'unshielded-material'
+        'unshielded-material',
+        'shield-material' // dose rate calculator
       ];
       materialDropdownIds.forEach(id => {
         const select = document.getElementById(id);
@@ -645,6 +646,31 @@
     }
     // Call this function once after all dropdowns are defined
     populateAllDropdowns();
+
+    // --- Synchronize isotope selection between calculators ---
+    function syncIsotopeDropdowns(selectedValue) {
+      isotopeDropdownIds.forEach(id => {
+        const select = document.getElementById(id);
+        if (select && select.value !== selectedValue) {
+          select.value = selectedValue;
+        }
+      });
+      localStorage.setItem('lastIsotope', selectedValue);
+    }
+    // Restore last selected isotope if available
+    const lastIso = localStorage.getItem('lastIsotope');
+    if (lastIso && Object.keys(isotopes).includes(lastIso)) {
+      syncIsotopeDropdowns(lastIso);
+    }
+    // Add event listeners to synchronize selection
+    isotopeDropdownIds.forEach(id => {
+      const select = document.getElementById(id);
+      if (select) {
+        select.addEventListener('change', function() {
+          syncIsotopeDropdowns(this.value);
+        });
+      }
+    });
 
     // ============================================================================
     // Event Handler: Radioactive Decay Calculation
