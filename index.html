@@ -375,30 +375,27 @@
   </footer>
   <script>
   // Reload assets button logic
-  document.addEventListener('DOMContentLoaded', function() {
-    const reloadBtn = document.getElementById('reload-assets');
-    if (reloadBtn) {
-      reloadBtn.addEventListener('click', function() {
-        if ('serviceWorker' in navigator) {
-          // Unregister all service workers, then reload
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            Promise.all(registrations.map(r => r.unregister())).then(function() {
-              // Bypass cache and reload
-              window.location.reload(true);
-            });
+  const reloadBtn = document.getElementById('reload-assets');
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', function() {
+      if ('serviceWorker' in navigator) {
+        // Unregister all service workers, then reload
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          Promise.all(registrations.map(r => r.unregister())).then(function() {
+            // Bypass cache and reload
+            window.location.reload(true);
           });
-        } else {
-          window.location.reload(true);
-        }
-      });
-    }
-  });
-  document.addEventListener('DOMContentLoaded', function() {
-    // ============================================================================
-    // Initialization and Data Definitions
-    // ============================================================================
-    // --- Radioisotope Data: half-lives, dose constants, and gamma energies
-    const isotopes = {
+        });
+      } else {
+        window.location.reload(true);
+      }
+    });
+  }
+  // ============================================================================
+  // Initialization and Data Definitions
+  // ============================================================================
+  // --- Radioisotope Data: half-lives, dose constants, and gamma energies
+  const isotopes = {
       "C-11":   { halfLife: 0.34,     doseConstant: 0.055, energy: 511 },
       "O-15":   { halfLife: 0.0338,   doseConstant: 0.307, energy: 511 },
       "F-18":   { halfLife: 1.83,     doseConstant: 0.143, energy: 511 },
@@ -887,7 +884,7 @@
       document.getElementById('patient-result').innerText =
         `Effective Dose: ${dose.toFixed(3)} mSv`;
     });
-  });
+  // ...existing code...
   </script>
   <!-- ============================================================================
   Service Worker Registration
