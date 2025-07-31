@@ -923,6 +923,28 @@
       document.getElementById('patient-result').innerText =
         `Effective Dose: ${dose.toFixed(3)} mSv`;
     });
+  // ============================================================================
+  // Shielding Thickness Calculator Logic
+  // ============================================================================
+  document.getElementById('shielding-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const iso = document.getElementById('shielding-isotope').value;
+    const material = document.getElementById('shielding-material').value;
+    const unshielded = parseFloat(document.getElementById('shielding-unshielded').value);
+    const target = parseFloat(document.getElementById('shielding-target').value);
+    const unit = document.getElementById('shielding-unit').value;
+    if (!iso || !material || isNaN(unshielded) || isNaN(target) || target <= 0 || unshielded <= 0 || target >= unshielded) {
+      document.getElementById('shielding-result').innerText = "Please enter valid values (target must be less than unshielded, both > 0).";
+      return;
+    }
+    const energy = isotopes[iso].energy;
+    const mu = getMu(material, energy);
+    let thicknessCm = Math.log(unshielded / target) / mu;
+    let thickness = thicknessCm;
+    if (unit === 'mm') thickness = thicknessCm * 10;
+    else if (unit === 'm') thickness = thicknessCm / 100;
+    document.getElementById('shielding-result').innerText = `Required thickness: ${thickness.toFixed(2)} ${unit}`;
+  });
   // ...existing code...
   </script>
   <!-- ============================================================================
