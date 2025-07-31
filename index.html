@@ -132,6 +132,7 @@
       <label for="calculator-select">Select Calculator:</label>
       <select id="calculator-select">
         <option value="decay">Radioactive Decay</option>
+        <option value="reverse-decay">Reverse Decay (Required Initial Activity)</option>
         <option value="dose">Dose Rate</option>
         <option value="conversion">Unit Conversion</option>
         <option value="patient">Patient Effective Dose</option>
@@ -172,6 +173,33 @@
         <button type="submit">Calculate Remaining Activity</button>
       </form>
       <div id="result"></div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- Reverse Decay Calculator Section                                            -->
+    <!-- ========================================================================= -->
+    <section id="reverse-decay-container" class="card" style="display:none;">
+      <h1>Reverse Decay Calculator</h1>
+      <form id="reverse-decay-form">
+        <label for="target-activity">Target Activity (MBq):</label>
+        <input type="number" id="target-activity" inputmode="numeric" pattern="[0-9]*" required />
+
+        <label for="reverse-isotope">Select Isotope:</label>
+        <select id="reverse-isotope" required></select>
+
+        <label for="reverse-time-elapsed">Time Elapsed:</label>
+        <input type="number" id="reverse-time-elapsed" inputmode="numeric" pattern="[0-9]*" required />
+
+        <label for="reverse-time-unit">Time Unit:</label>
+        <select id="reverse-time-unit" required>
+          <option value="hours" selected>Hours</option>
+          <option value="minutes">Minutes</option>
+          <option value="days">Days</option>
+        </select>
+
+        <button type="submit">Calculate Required Initial Activity</button>
+      </form>
+      <div id="reverse-result"></div>
     </section>
 
     <!-- ========================================================================= -->
@@ -389,6 +417,7 @@
     // Calculator selection logic
     function showCalculator(name) {
       document.getElementById('decay-container').style.display = name === 'decay' ? 'block' : 'none';
+      document.getElementById('reverse-decay-container').style.display = name === 'reverse-decay' ? 'block' : 'none';
       document.getElementById('dose-container').style.display = name === 'dose' ? 'block' : 'none';
       document.getElementById('conversion-container').style.display = name === 'conversion' ? 'block' : 'none';
       document.getElementById('patient-container').style.display = name === 'patient' ? 'block' : 'none';
@@ -396,7 +425,7 @@
     }
 
     const selectElement = document.getElementById('calculator-select');
-    const validCalcs = ['decay','dose','conversion','patient'];
+    const validCalcs = ['decay','reverse-decay','dose','conversion','patient'];
     const stored = localStorage.getItem('lastCalculator');
     const lastUsed = validCalcs.includes(stored) ? stored : 'decay';
     selectElement.value = lastUsed;
@@ -568,6 +597,27 @@
       const A = A0 * Math.exp(-lambda * t);
 
       document.getElementById('result').innerText = `Remaining activity: ${A.toFixed(3)} MBq`;
+    });
+
+    // ============================================================================
+    // Event Handler: Reverse Decay Calculation
+    // ============================================================================
+    document.getElementById('reverse-decay-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const targetA = parseFloat(document.getElementById('target-activity').value);
+      const iso = document.getElementById('reverse-isotope').value;
+      let t = parseFloat(document.getElementById('reverse-time-elapsed').value);
+      const unit = document.getElementById('reverse-time-unit').value;
+      if (unit === 'minutes') t /= 60;
+      else if (unit === 'days') t *= 24;
+      if (isNaN(targetA) || !iso || isNaN(t)) {
+        document.getElementById('reverse-result').innerText = "Please enter valid numbers in all fields.";
+        return;
+      }
+      const T_half = isotopes[iso].halfLife;
+      const lambda = Math.log(2) / T_half;
+      const requiredA0 = targetA / Math.exp(-lambda * t);
+      document.getElementById('reverse-result').innerText = `Required initial activity: ${requiredA0.toFixed(3)} MBq`;
     });
 
     // ============================================================================
