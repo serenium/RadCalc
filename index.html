@@ -276,6 +276,31 @@
       <svg id="chain-graph" width="100%" height="300" style="background:#fdf6e3; margin-top:1rem;"></svg>
     </section>
     <!-- ========================================================================= -->
+    <!-- Unshielded Dose Rate Estimator Calculator Section -->
+    <section id="unshielded-estimator-container" class="card" style="display:none;">
+      <h1>Unshielded Dose Rate Estimator</h1>
+      <form id="unshielded-estimator-form">
+        <label for="unshielded-isotope">Select Isotope:</label>
+        <select id="unshielded-isotope" required></select>
+        <label for="unshielded-distance">Distance from Source (m):</label>
+        <input type="number" id="unshielded-distance" inputmode="numeric" pattern="[0-9]*" required />
+        <label for="unshielded-material">Shielding Material:</label>
+        <select id="unshielded-material" required></select>
+        <label for="unshielded-thickness">Shielding Thickness:</label>
+        <input type="number" id="unshielded-thickness" inputmode="numeric" pattern="[0-9]*" min="0" required />
+        <label for="unshielded-thickness-unit">Thickness Unit:</label>
+        <select id="unshielded-thickness-unit">
+          <option value="mm" selected>mm</option>
+          <option value="cm">cm</option>
+          <option value="m">m</option>
+        </select>
+        <label for="unshielded-measured">Measured Dose Rate (μSv/h):</label>
+        <input type="number" id="unshielded-measured" inputmode="numeric" pattern="[0-9]*" required />
+        <button type="submit">Estimate Unshielded Dose Rate</button>
+      </form>
+      <div id="unshielded-estimator-result"></div>
+    </section>
+    <!-- ========================================================================= -->
     <section id="shielding-container" class="card" style="display:none;">
       <h1>Shielding Thickness Calculator</h1>
       <form id="shielding-form">
@@ -481,11 +506,12 @@
       document.getElementById('conversion-container').style.display = name === 'conversion' ? 'block' : 'none';
       document.getElementById('patient-container').style.display = name === 'patient' ? 'block' : 'none';
       document.getElementById('chain-container').style.display = name === 'chain' ? 'block' : 'none';
+     document.getElementById('unshielded-estimator-container').style.display = name === 'unshielded-estimator' ? 'block' : 'none';
       localStorage.setItem('lastCalculator', name);
     }
 
     const selectElement = document.getElementById('calculator-select');
-    const validCalcs = ['decay','reverse-decay','dose','shielding','conversion','patient'];
+    const validCalcs = ['decay','reverse-decay','dose','shielding','conversion','patient','chain','unshielded-estimator'];
     const stored = localStorage.getItem('lastCalculator');
     const lastUsed = validCalcs.includes(stored) ? stored : 'decay';
     selectElement.value = lastUsed;
@@ -571,6 +597,76 @@
       "Rb-81": "Kr-81m",
       // Add more chains as needed
     };
+
+    // --- Unshielded Dose Rate Estimator Dropdowns ---
+    const unshieldedIsoSelect = document.getElementById('unshielded-isotope');
+    Object.keys(isotopes).forEach(key => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      unshieldedIsoSelect.appendChild(option);
+    });
+
+    // Synchronize isotope selection with other calculators
+    function syncIsotopes(selected) {
+      [isotopeSelect, doseIsotopeSelect, reverseIsotopeSelect, shieldingIsotopeSelect, unshieldedIsoSelect].forEach(sel => {
+        if (sel && sel.value !== selected && Object.keys(isotopes).includes(selected)) sel.value = selected;
+      });
+      localStorage.setItem('lastIsotope', selected);
+    }
+    // Restore last isotope selection
+    const savedIso = localStorage.getItem('lastIsotope');
+    if (savedIso && isotopes[savedIso]) {
+      syncIsotopes(savedIso);
+    }
+    unshieldedIsoSelect.addEventListener('change', () => {
+      syncIsotopes(unshieldedIsoSelect.value);
+    });
+    isotopeSelect.addEventListener('change', () => {
+      syncIsotopes(isotopeSelect.value);
+    });
+    doseIsotopeSelect.addEventListener('change', () => {
+      syncIsotopes(doseIsotopeSelect.value);
+    });
+    reverseIsotopeSelect.addEventListener('change', () => {
+      syncIsotopes(reverseIsotopeSelect.value);
+    });
+    shieldingIsotopeSelect.addEventListener('change', () => {
+      syncIsotopes(shieldingIsotopeSelect.value);
+    });
+
+    // Populate material dropdown for estimator
+    const unshieldedMaterialSelect = document.getElementById('unshielded-material');
+    Object.keys(attenuationData).forEach(material => {
+      const opt = document.createElement('option');
+      opt.value = material;
+      opt.text = material.charAt(0).toUpperCase() + material.slice(1);
+      unshieldedMaterialSelect.appendChild(opt);
+    });
+    // Unshielded Dose Rate Estimator Calculation
+    document.getElementById('unshielded-estimator-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const iso = unshieldedIsoSelect.value;
+      const distance = parseFloat(document.getElementById('unshielded-distance').value);
+      const material = unshieldedMaterialSelect.value;
+      const rawThickness = parseFloat(document.getElementById('unshielded-thickness').value);
+      const thicknessUnit = document.getElementById('unshielded-thickness-unit').value;
+      const measuredRate = parseFloat(document.getElementById('unshielded-measured').value);
+      if (!iso || isNaN(distance) || !material || isNaN(rawThickness) || isNaN(measuredRate) || distance <= 0 || rawThickness < 0 || measuredRate <= 0) {
+        document.getElementById('unshielded-estimator-result').innerText = "Please enter valid values (distance > 0, thickness >= 0, measured rate > 0).";
+        return;
+      }
+      let thicknessCm = rawThickness;
+      if (thicknessUnit === 'mm') thicknessCm = rawThickness / 10;
+      else if (thicknessUnit === 'm') thicknessCm = rawThickness * 100;
+      const energy = isotopes[iso].energy;
+      const mu = getMu(material, energy);
+      const attenuationFactor = Math.exp(-mu * thicknessCm);
+      // Unshielded dose rate = measured / attenuation
+      const unshieldedRate = measuredRate / attenuationFactor;
+      document.getElementById('unshielded-estimator-result').innerText =
+        `Estimated unshielded dose rate at ${distance} m: ${unshieldedRate.toFixed(3)} μSv/h\nAttenuation factor: ${attenuationFactor.toExponential(3)}`;
+    });
 
     // Populate parent/daughter dropdowns
     const chainParentSelect = document.getElementById('chain-parent');
