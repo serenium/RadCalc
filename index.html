@@ -790,112 +790,34 @@
       svg.innerHTML += `<text x="${pad-10}" y="${H/2}" text-anchor="end" fill="#073642" font-size="12" transform="rotate(-90,${pad-10},${H/2})">Activity (MBq)</text>`;
     });
     // ============================================================================
-    const isotopeSelect = document.getElementById('isotope');
-    Object.keys(isotopes).forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      isotopeSelect.appendChild(option);
-    });
-
-    const doseIsotopeSelect = document.getElementById('dose-isotope');
-    Object.keys(isotopes).forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
-      doseIsotopeSelect.appendChild(option);
-    });
-
-    // ============================================================================
-    // Reverse Decay Calculator Logic
-    // ============================================================================
-    // Populate isotope dropdown for reverse decay
-    const reverseIsotopeSelect = document.getElementById('reverse-isotope');
+    // Isotope Dropdowns
+    // Ensure all isotope dropdowns are cleared before populating
+    isotopeSelect.innerHTML = '';
+    doseIsotopeSelect.innerHTML = '';
     reverseIsotopeSelect.innerHTML = '';
-    Object.keys(isotopes).forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      reverseIsotopeSelect.appendChild(option);
-    });
-
-    // ============================================================================
-    // Shielding Thickness Calculator Logic
-    // ============================================================================
-    // Populate isotope dropdown for shielding calculator
-    const shieldingIsotopeSelect = document.getElementById('shielding-isotope');
     shieldingIsotopeSelect.innerHTML = '';
+    unshieldedIsoSelect.innerHTML = '';
     Object.keys(isotopes).forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      shieldingIsotopeSelect.appendChild(option);
-    });
-
-    // Populate material dropdown
-    const shieldingMaterialSelect = document.getElementById('shielding-material');
-    shieldingMaterialSelect.innerHTML = '';
-    Object.keys(attenuationData).forEach(material => {
-      const opt = document.createElement('option');
-      opt.value = material;
-      opt.text = material.charAt(0).toUpperCase() + material.slice(1);
-      shieldingMaterialSelect.appendChild(opt);
-    });
-
-    // Restore last selections
-    const savedShieldingIso = localStorage.getItem('shieldingIsotope');
-    if (savedShieldingIso && isotopes[savedShieldingIso]) shieldingIsotopeSelect.value = savedShieldingIso;
-    shieldingIsotopeSelect.addEventListener('change', () => {
-      syncIsotopes(shieldingIsotopeSelect.value);
-      localStorage.setItem('shieldingIsotope', shieldingIsotopeSelect.value);
-    });
-
-    const savedShieldingMaterial = localStorage.getItem('shieldingMaterial');
-    if (savedShieldingMaterial && attenuationData[savedShieldingMaterial]) shieldingMaterialSelect.value = savedShieldingMaterial;
-    shieldingMaterialSelect.addEventListener('change', () => {
-      localStorage.setItem('shieldingMaterial', shieldingMaterialSelect.value);
-    });
-
-    const shieldingUnshieldedInput = document.getElementById('shielding-unshielded');
-    const savedShieldingUnshielded = localStorage.getItem('shieldingUnshielded');
-    if (savedShieldingUnshielded) shieldingUnshieldedInput.value = savedShieldingUnshielded;
-    shieldingUnshieldedInput.addEventListener('input', () => {
-      localStorage.setItem('shieldingUnshielded', shieldingUnshieldedInput.value);
-    });
-
-    const shieldingTargetInput = document.getElementById('shielding-target');
-    const savedShieldingTarget = localStorage.getItem('shieldingTarget');
-    if (savedShieldingTarget) shieldingTargetInput.value = savedShieldingTarget;
-    shieldingTargetInput.addEventListener('input', () => {
-      localStorage.setItem('shieldingTarget', shieldingTargetInput.value);
-    });
-
-    const shieldingUnitSelect = document.getElementById('shielding-unit');
-    const savedShieldingUnit = localStorage.getItem('shieldingUnit');
-    if (savedShieldingUnit) shieldingUnitSelect.value = savedShieldingUnit;
-    shieldingUnitSelect.addEventListener('change', () => {
-      localStorage.setItem('shieldingUnit', shieldingUnitSelect.value);
-    });
-
-    // Calculation logic
-    document.getElementById('shielding-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const iso = shieldingIsotopeSelect.value;
-      const material = shieldingMaterialSelect.value;
-      const unshielded = parseFloat(shieldingUnshieldedInput.value);
-      const target = parseFloat(shieldingTargetInput.value);
-      const unit = shieldingUnitSelect.value;
-      if (!iso || !material || isNaN(unshielded) || isNaN(target) || target <= 0 || unshielded <= 0 || target >= unshielded) {
-        document.getElementById('shielding-result').innerText = "Please enter valid values (target must be less than unshielded, both > 0).";
-        return;
-      }
-      const energy = isotopes[iso].energy;
-      const mu = getMu(material, energy);
-      let thicknessCm = Math.log(unshielded / target) / mu;
-      let thickness = thicknessCm;
-      if (unit === 'mm') thickness = thicknessCm * 10;
-      else if (unit === 'm') thickness = thicknessCm / 100;
-      document.getElementById('shielding-result').innerText = `Required thickness: ${thickness.toFixed(2)} ${unit}`;
+      const option1 = document.createElement('option');
+      option1.value = key;
+      option1.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      isotopeSelect.appendChild(option1);
+      const option2 = document.createElement('option');
+      option2.value = key;
+      option2.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
+      doseIsotopeSelect.appendChild(option2);
+      const option3 = document.createElement('option');
+      option3.value = key;
+      option3.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      reverseIsotopeSelect.appendChild(option3);
+      const option4 = document.createElement('option');
+      option4.value = key;
+      option4.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      shieldingIsotopeSelect.appendChild(option4);
+      const option5 = document.createElement('option');
+      option5.value = key;
+      option5.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      unshieldedIsoSelect.appendChild(option5);
     });
     // ============================================================================
     // Event Handler: Radioactive Decay Calculation
