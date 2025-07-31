@@ -560,24 +560,41 @@
       localStorage.setItem('lastShieldMaterial', shieldSelect.value);
     });
 
+    // =========================================================================
+    // Synchronize isotope selection between calculators and remember selection
+    // =========================================================================
+    function syncIsotopes(selected) {
+      isotopeSelect.value = selected;
+      doseIsotopeSelect.value = selected;
+      reverseIsotopeSelect.value = selected;
+      localStorage.setItem('lastIsotope', selected);
+      localStorage.setItem('reverseIsotope', selected);
+    }
+
+    // Restore last isotope selection
     const savedIsotope = localStorage.getItem('lastIsotope');
     if (savedIsotope && isotopes[savedIsotope]) {
       isotopeSelect.value = savedIsotope;
       doseIsotopeSelect.value = savedIsotope;
+      reverseIsotopeSelect.value = savedIsotope;
     }
 
-    function syncIsotopes(selected) {
-      isotopeSelect.value = selected;
-      doseIsotopeSelect.value = selected;
-      localStorage.setItem('lastIsotope', selected);
+    // Restore last reverse isotope selection if different
+    const savedReverseIso = localStorage.getItem('reverseIsotope');
+    if (savedReverseIso && isotopes[savedReverseIso]) {
+      reverseIsotopeSelect.value = savedReverseIso;
+      isotopeSelect.value = savedReverseIso;
+      doseIsotopeSelect.value = savedReverseIso;
     }
 
     isotopeSelect.addEventListener('change', () => {
       syncIsotopes(isotopeSelect.value);
     });
-
     doseIsotopeSelect.addEventListener('change', () => {
       syncIsotopes(doseIsotopeSelect.value);
+    });
+    reverseIsotopeSelect.addEventListener('change', () => {
+      syncIsotopes(reverseIsotopeSelect.value);
     });
 
     // ============================================================================
