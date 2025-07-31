@@ -588,21 +588,23 @@
 
       const unshieldedRate = constant * activity / (distance * distance);
 
-      // Determine shielding attenuation
+      // Determine shielding attenuation only if section is visible and valid
       let shieldedRate = unshieldedRate;
-      const material = document.getElementById('shield-material').value;
-      const rawThickness = parseFloat(document.getElementById('shield-thickness').value);
-      const shieldUnit = document.getElementById('shield-unit').value;
-      // Convert thickness to cm
-      let thicknessCm = rawThickness;
-      if (shieldUnit === 'mm') thicknessCm = rawThickness / 10;
-      else if (shieldUnit === 'm') thicknessCm = rawThickness * 100;
-      if (material && !isNaN(thicknessCm)) {
-        const selectedIso = document.getElementById('dose-isotope').value;
-        const energy = isotopes[selectedIso].energy;
-        const mu = getMu(material, energy);
-        const attenuationFactor = Math.exp(-mu * thicknessCm);
-        shieldedRate = unshieldedRate * attenuationFactor;
+      const shieldingSection = document.getElementById('shielding-section');
+      if (shieldingSection.style.display !== 'none') {
+        const material = document.getElementById('shield-material').value;
+        const rawThickness = parseFloat(document.getElementById('shield-thickness').value);
+        const shieldUnit = document.getElementById('shield-unit').value;
+        let thicknessCm = rawThickness;
+        if (shieldUnit === 'mm') thicknessCm = rawThickness / 10;
+        else if (shieldUnit === 'm') thicknessCm = rawThickness * 100;
+        if (material && !isNaN(thicknessCm) && thicknessCm > 0) {
+          const selectedIso = document.getElementById('dose-isotope').value;
+          const energy = isotopes[selectedIso].energy;
+          const mu = getMu(material, energy);
+          const attenuationFactor = Math.exp(-mu * thicknessCm);
+          shieldedRate = unshieldedRate * attenuationFactor;
+        }
       }
 
       // Exposure time in hours
