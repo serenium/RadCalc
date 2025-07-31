@@ -458,18 +458,6 @@
 
     const selectElement = document.getElementById('calculator-select');
     const validCalcs = ['decay','reverse-decay','dose','shielding','conversion','patient'];
-    function showCalculator(name) {
-      document.getElementById('decay-container').style.display = name === 'decay' ? 'block' : 'none';
-      document.getElementById('reverse-decay-container').style.display = name === 'reverse-decay' ? 'block' : 'none';
-      document.getElementById('dose-container').style.display = name === 'dose' ? 'block' : 'none';
-      document.getElementById('shielding-container').style.display = name === 'shielding' ? 'block' : 'none';
-      document.getElementById('conversion-container').style.display = name === 'conversion' ? 'block' : 'none';
-      document.getElementById('patient-container').style.display = name === 'patient' ? 'block' : 'none';
-      localStorage.setItem('lastCalculator', name);
-    }
-
-    const selectElement = document.getElementById('calculator-select');
-    const validCalcs = ['decay','reverse-decay','dose','shielding','conversion','patient'];
     const stored = localStorage.getItem('lastCalculator');
     const lastUsed = validCalcs.includes(stored) ? stored : 'decay';
     selectElement.value = lastUsed;
