@@ -596,45 +596,55 @@
       // Add more chains as needed
     };
 
-    // --- Isotope Dropdowns ---
-    // Define all dropdown variables before populating
-    const isotopeSelect = document.getElementById('isotope');
-    const doseIsotopeSelect = document.getElementById('dose-isotope');
-    const reverseIsotopeSelect = document.getElementById('reverse-isotope');
-    const shieldingIsotopeSelect = document.getElementById('shielding-isotope');
-    const unshieldedIsoSelect = document.getElementById('unshielded-isotope');
-    // Populate all isotope dropdowns
-    function populateIsotopeDropdowns() {
-      isotopeSelect.innerHTML = '';
-      doseIsotopeSelect.innerHTML = '';
-      reverseIsotopeSelect.innerHTML = '';
-      shieldingIsotopeSelect.innerHTML = '';
-      unshieldedIsoSelect.innerHTML = '';
-      Object.keys(isotopes).forEach(key => {
-        const option1 = document.createElement('option');
-        option1.value = key;
-        option1.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-        isotopeSelect.appendChild(option1);
-        const option2 = document.createElement('option');
-        option2.value = key;
-        option2.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
-        doseIsotopeSelect.appendChild(option2);
-        const option3 = document.createElement('option');
-        option3.value = key;
-        option3.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-        reverseIsotopeSelect.appendChild(option3);
-        const option4 = document.createElement('option');
-        option4.value = key;
-        option4.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-        shieldingIsotopeSelect.appendChild(option4);
-        const option5 = document.createElement('option');
-        option5.value = key;
-        option5.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-        unshieldedIsoSelect.appendChild(option5);
+    // --- Isotope and Material Dropdowns ---
+    function populateAllDropdowns() {
+      // Isotope dropdowns
+      const isotopeDropdownIds = [
+        'isotope',
+        'dose-isotope',
+        'reverse-isotope',
+        'shielding-isotope',
+        'unshielded-isotope',
+        'chain-parent'
+      ];
+      isotopeDropdownIds.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+          select.innerHTML = '';
+          Object.keys(isotopes).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            // Dose calculator gets dose constant, others get half-life
+            if (id === 'dose-isotope') {
+              option.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
+            } else {
+              option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+            }
+            select.appendChild(option);
+          });
+        }
+      });
+
+      // Material dropdowns
+      const materialDropdownIds = [
+        'shielding-material',
+        'unshielded-material'
+      ];
+      materialDropdownIds.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+          select.innerHTML = '';
+          Object.keys(attenuationData).forEach(material => {
+            const option = document.createElement('option');
+            option.value = material;
+            option.text = material.charAt(0).toUpperCase() + material.slice(1);
+            select.appendChild(option);
+          });
+        }
       });
     }
     // Call this function once after all dropdowns are defined
-    populateIsotopeDropdowns();
+    populateAllDropdowns();
 
     // ============================================================================
     // Event Handler: Radioactive Decay Calculation
