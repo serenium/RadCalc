@@ -259,7 +259,29 @@
       <div id="patient-result"></div>
     </section>
   </main>
+  <footer style="text-align:center; margin:2rem 0 1rem 0;">
+    <button id="reload-assets" style="max-width:300px;">Reload Assets (Bypass Cache)</button>
+  </footer>
   <script>
+  // Reload assets button logic
+  document.addEventListener('DOMContentLoaded', function() {
+    const reloadBtn = document.getElementById('reload-assets');
+    if (reloadBtn) {
+      reloadBtn.addEventListener('click', function() {
+        if ('serviceWorker' in navigator) {
+          // Unregister all service workers, then reload
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            Promise.all(registrations.map(r => r.unregister())).then(function() {
+              // Bypass cache and reload
+              window.location.reload(true);
+            });
+          });
+        } else {
+          window.location.reload(true);
+        }
+      });
+    }
+  });
   document.addEventListener('DOMContentLoaded', function() {
     // ============================================================================
     // Initialization and Data Definitions
