@@ -597,9 +597,12 @@
     };
 
     // --- Isotope Dropdowns ---
-    // Ensure all isotope dropdowns are cleared before populating
-    // Get all dropdowns at the top, only once
-    // Remove duplicate declarations below
+    // Define all dropdown variables before populating
+    const isotopeSelect = document.getElementById('isotope');
+    const doseIsotopeSelect = document.getElementById('dose-isotope');
+    const reverseIsotopeSelect = document.getElementById('reverse-isotope');
+    const shieldingIsotopeSelect = document.getElementById('shielding-isotope');
+    const unshieldedIsoSelect = document.getElementById('unshielded-isotope');
     // Populate all isotope dropdowns
     function populateIsotopeDropdowns() {
       isotopeSelect.innerHTML = '';
