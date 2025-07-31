@@ -621,9 +621,20 @@
       // Build result text
       let resultText =
         `Unshielded Dose Rate: ${unshieldedRate.toFixed(3)} μSv/h\n` +
-        `Unshielded Total Dose: ${totalDoseUn.toFixed(3)} μSv\n` +
-        `Shielded Dose Rate: ${shieldedRate.toFixed(3)} μSv/h\n` +
-        `Shielded Total Dose: ${totalDoseSh.toFixed(3)} μSv`;
+        `Unshielded Total Dose: ${totalDoseUn.toFixed(3)} μSv`;
+
+      // Only show shielded results if shielding is selected and valid
+      const shieldingSectionVisible = shieldingSection.style.display !== 'none';
+      const material = document.getElementById('shield-material').value;
+      const rawThickness = parseFloat(document.getElementById('shield-thickness').value);
+      const shieldUnit = document.getElementById('shield-unit').value;
+      let thicknessCm = rawThickness;
+      if (shieldUnit === 'mm') thicknessCm = rawThickness / 10;
+      else if (shieldUnit === 'm') thicknessCm = rawThickness * 100;
+      if (shieldingSectionVisible && material && !isNaN(thicknessCm) && thicknessCm > 0) {
+        resultText += `\nShielded Dose Rate: ${shieldedRate.toFixed(3)} μSv/h`;
+        resultText += `\nShielded Total Dose: ${totalDoseSh.toFixed(3)} μSv`;
+      }
 
       document.getElementById('dose-result').innerText = resultText;
     });
