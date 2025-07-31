@@ -522,6 +522,19 @@
     });
 
     // ============================================================================
+    // Reverse Decay Calculator Logic
+    // ============================================================================
+    // Populate isotope dropdown for reverse decay
+    const reverseIsotopeSelect = document.getElementById('reverse-isotope');
+    reverseIsotopeSelect.innerHTML = '';
+    Object.keys(isotopes).forEach(key => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      reverseIsotopeSelect.appendChild(option);
+    });
+
+    // ============================================================================
     // Populate Shielding Materials Dropdown
     // ============================================================================
     const shieldSelect = document.getElementById('shield-material');
