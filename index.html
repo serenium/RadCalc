@@ -631,7 +631,7 @@
         'unshielded-material',
         'shield-material' // dose rate calculator
       ];
-      materialDropdownIds.forEach(id => {
+      materialDropdowns.forEach(id => {
         const select = document.getElementById(id);
         if (select) {
           select.innerHTML = '';
@@ -944,6 +944,38 @@
     if (unit === 'mm') thickness = thicknessCm * 10;
     else if (unit === 'm') thickness = thicknessCm / 100;
     document.getElementById('shielding-result').innerText = `Required thickness: ${thickness.toFixed(2)} ${unit}`;
+  });
+  // ==========================================================================
+  // Event Handler: Unshielded Dose Rate Estimator
+  // ==========================================================================
+  document.getElementById('unshielded-estimator-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const iso = document.getElementById('unshielded-isotope').value;
+    const material = document.getElementById('unshielded-material').value;
+    const thicknessRaw = parseFloat(document.getElementById('unshielded-thickness').value);
+    const thicknessUnit = document.getElementById('unshielded-thickness-unit').value;
+    const distance = parseFloat(document.getElementById('unshielded-distance').value);
+    const measured = parseFloat(document.getElementById('unshielded-measured').value);
+    if (!iso || !material || isNaN(thicknessRaw) || thicknessRaw < 0 || !thicknessUnit || isNaN(distance) || distance <= 0 || isNaN(measured) || measured <= 0) {
+      document.getElementById('unshielded-estimator-result').innerText = "Please enter valid values (distance, measured dose rate > 0, thickness >= 0).";
+      return;
+    }
+    // Convert thickness to cm
+    let thicknessCm = thicknessRaw;
+    if (thicknessUnit === 'mm') thicknessCm = thicknessRaw / 10;
+    else if (thicknessUnit === 'm') thicknessCm = thicknessRaw * 100;
+    // Get attenuation factor
+    const energy = isotopes[iso].energy;
+    const mu = getMu(material, energy);
+    const attenuation = Math.exp(-mu * thicknessCm);
+    // Estimate unshielded dose rate
+    const unshieldedRate = measured / attenuation;
+    // Estimate activity (MBq) using dose constant and distance
+    const doseConstant = isotopes[iso].doseConstant;
+    const estimatedActivity = unshieldedRate * (distance * distance) / doseConstant;
+    let resultText = `Estimated unshielded dose rate: ${unshieldedRate.toFixed(3)} μSv/h\n`;
+    resultText += `Estimated source activity: ${estimatedActivity.toFixed(3)} MBq`;
+    document.getElementById('unshielded-estimator-result').innerText = resultText;
   });
   // ...existing code...
   </script>
