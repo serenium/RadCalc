@@ -599,226 +599,43 @@
       // Add more chains as needed
     };
 
-    // --- Unshielded Dose Rate Estimator Dropdowns ---
-    const unshieldedIsoSelect = document.getElementById('unshielded-isotope');
-    Object.keys(isotopes).forEach(key => {
-      const option = document.createElement('option');
-      option.value = key;
-      option.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      unshieldedIsoSelect.appendChild(option);
-    });
-
-    // Populate material dropdown for unshielded estimator
-    const unshieldedMaterialSelect = document.getElementById('unshielded-material');
-    unshieldedMaterialSelect.innerHTML = '';
-    Object.keys(attenuationData).forEach(material => {
-      const opt = document.createElement('option');
-      opt.value = material;
-      opt.text = material.charAt(0).toUpperCase() + material.slice(1);
-      unshieldedMaterialSelect.appendChild(opt);
-    });
-
-    // Synchronize isotope selection with other calculators
-    function syncIsotopes(selected) {
-      [isotopeSelect, doseIsotopeSelect, reverseIsotopeSelect, shieldingIsotopeSelect, unshieldedIsoSelect].forEach(sel => {
-        if (sel && sel.value !== selected && Object.keys(isotopes).includes(selected)) sel.value = selected;
-      });
-      localStorage.setItem('lastIsotope', selected);
-    }
-    // Restore last isotope selection
-    const savedIso = localStorage.getItem('lastIsotope');
-    if (savedIso && isotopes[savedIso]) {
-      syncIsotopes(savedIso);
-    }
-    unshieldedIsoSelect.addEventListener('change', () => {
-      syncIsotopes(unshieldedIsoSelect.value);
-    });
-    isotopeSelect.addEventListener('change', () => {
-      syncIsotopes(isotopeSelect.value);
-    });
-    doseIsotopeSelect.addEventListener('change', () => {
-      syncIsotopes(doseIsotopeSelect.value);
-    });
-    reverseIsotopeSelect.addEventListener('change', () => {
-      syncIsotopes(reverseIsotopeSelect.value);
-    });
-    shieldingIsotopeSelect.addEventListener('change', () => {
-      syncIsotopes(shieldingIsotopeSelect.value);
-    });
-
-    // Populate material dropdown for estimator
-    // (Already declared above, so just populate if needed)
-    Object.keys(attenuationData).forEach(material => {
-      const opt = document.createElement('option');
-      opt.value = material;
-      opt.text = material.charAt(0).toUpperCase() + material.slice(1);
-      unshieldedMaterialSelect.appendChild(opt);
-    });
-    // Unshielded Dose Rate Estimator Calculation
-    document.getElementById('unshielded-estimator-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const iso = unshieldedIsoSelect.value;
-      const distance = parseFloat(document.getElementById('unshielded-distance').value);
-      const material = unshieldedMaterialSelect.value;
-      const rawThickness = parseFloat(document.getElementById('unshielded-thickness').value);
-      const thicknessUnit = document.getElementById('unshielded-thickness-unit').value;
-      const measuredRate = parseFloat(document.getElementById('unshielded-measured').value);
-      if (!iso || isNaN(distance) || !material || isNaN(rawThickness) || isNaN(measuredRate) || distance <= 0 || rawThickness < 0 || measuredRate <= 0) {
-        document.getElementById('unshielded-estimator-result').innerText = "Please enter valid values (distance > 0, thickness >= 0, measured rate > 0).";
-        return;
-      }
-      let thicknessCm = rawThickness;
-      if (thicknessUnit === 'mm') thicknessCm = rawThickness / 10;
-      else if (thicknessUnit === 'm') thicknessCm = rawThickness * 100;
-      const energy = isotopes[iso].energy;
-      const mu = getMu(material, energy);
-      const attenuationFactor = Math.exp(-mu * thicknessCm);
-      // Unshielded dose rate = measured / attenuation
-      const unshieldedRate = measuredRate / attenuationFactor;
-      document.getElementById('unshielded-estimator-result').innerText =
-        `Estimated unshielded dose rate at ${distance} m: ${unshieldedRate.toFixed(3)} μSv/h\nAttenuation factor: ${attenuationFactor.toExponential(3)}`;
-    });
-
-    // Populate parent/daughter dropdowns
-    const chainParentSelect = document.getElementById('chain-parent');
-    const chainDaughterInput = document.getElementById('chain-daughter');
-    // Only show parents with valid daughters
-    Object.keys(decayChainMap).forEach(parentKey => {
-      if (isotopes[parentKey]) {
-        const optionP = document.createElement('option');
-        optionP.value = parentKey;
-        optionP.text = `${parentKey} (${formatHalfLife(isotopes[parentKey].halfLife)})`;
-        chainParentSelect.appendChild(optionP);
-      }
-    });
-
-    // Set initial daughter value
-    function updateChainDaughter() {
-      const parent = chainParentSelect.value;
-      if (decayChainMap[parent] && isotopes[decayChainMap[parent]]) {
-        chainDaughterInput.value = `${decayChainMap[parent]} (${formatHalfLife(isotopes[decayChainMap[parent]].halfLife)})`;
-      } else {
-        chainDaughterInput.value = '';
-      }
-    }
-    chainParentSelect.addEventListener('change', updateChainDaughter);
-    // Set on load
-    updateChainDaughter();
-
-    // Chain calculation and graphing
-    document.getElementById('chain-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const parentIso = chainParentSelect.value;
-      const daughterIso = decayChainMap[parentIso];
-      const A0 = parseFloat(document.getElementById('chain-activity').value);
-      let t = parseFloat(document.getElementById('chain-time').value);
-      const unit = document.getElementById('chain-time-unit').value;
-      if (unit === 'minutes') t /= 60;
-      else if (unit === 'days') t *= 24;
-      if (!parentIso || !daughterIso || isNaN(A0) || isNaN(t) || parentIso === daughterIso) {
-        document.getElementById('chain-result').innerText = "Please select a valid parent isotope and enter valid values.";
-        document.getElementById('chain-graph').innerHTML = '';
-        return;
-      }
-      const T1 = isotopes[parentIso].halfLife;
-      const T2 = isotopes[daughterIso].halfLife;
-      const lambda1 = Math.log(2) / T1;
-      const lambda2 = Math.log(2) / T2;
-      // Bateman equations for two-member chain
-      function parentActivity(A0, t) {
-        return A0 * Math.exp(-lambda1 * t);
-      }
-      function daughterActivity(A0, t) {
-        if (lambda1 === lambda2) {
-          // Special case: equal decay constants
-          return A0 * lambda1 * t * Math.exp(-lambda1 * t);
-        }
-        return A0 * (lambda2/(lambda2-lambda1)) * (Math.exp(-lambda1*t) - Math.exp(-lambda2*t));
-      }
-      // Calculate time to equilibrium (when dA_daughter/dt ~ 0)
-      let tEq = Math.log(lambda2/(lambda2-lambda1))/lambda1;
-      if (!isFinite(tEq) || tEq < 0) tEq = null;
-      // Calculate activities at t
-      const Ap = parentActivity(A0, t);
-      const Ad = daughterActivity(A0, t);
-      let eqText = tEq ? `Approximate time to equilibrium: ${tEq.toFixed(2)} h` : 'Equilibrium not reached.';
-      document.getElementById('chain-result').innerText =
-        `Parent activity at t: ${Ap.toFixed(3)} MBq\nDaughter activity at t: ${Ad.toFixed(3)} MBq\n${eqText}`;
-
-      // Graphing
-      const svg = document.getElementById('chain-graph');
-      svg.innerHTML = '';
-      const W = svg.clientWidth || 600;
-      const H = svg.clientHeight || 300;
-      const N = 100;
-      let maxA = 0;
-      const times = [], ApArr = [], AdArr = [];
-      for (let i = 0; i <= N; ++i) {
-        const tt = t * i / N;
-        const ap = parentActivity(A0, tt);
-        const ad = daughterActivity(A0, tt);
-        times.push(tt);
-        ApArr.push(ap);
-        AdArr.push(ad);
-        maxA = Math.max(maxA, ap, ad);
-      }
-      // Axes
-      const pad = 40;
-      svg.innerHTML += `<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#073642" stroke-width="2" />`;
-      svg.innerHTML += `<line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" stroke="#073642" stroke-width="2" />`;
-      // Parent curve
-      let pathP = '';
-      for (let i = 0; i <= N; ++i) {
-        const x = pad + (W-2*pad) * (times[i]/t);
-        const y = H-pad - (H-2*pad) * (ApArr[i]/maxA);
-        pathP += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
-      }
-      svg.innerHTML += `<path d="${pathP}" fill="none" stroke="#004665" stroke-width="2" />`;
-      // Daughter curve
-      let pathD = '';
-      for (let i = 0; i <= N; ++i) {
-        const x = pad + (W-2*pad) * (times[i]/t);
-        const y = H-pad - (H-2*pad) * (AdArr[i]/maxA);
-        pathD += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
-      }
-      svg.innerHTML += `<path d="${pathD}" fill="none" stroke="#b58900" stroke-width="2" />`;
-      // Labels
-      svg.innerHTML += `<text x="${W/2}" y="${pad-10}" text-anchor="middle" fill="#073642" font-size="16">Activity vs Time</text>`;
-      svg.innerHTML += `<text x="${pad}" y="${pad-10}" fill="#004665" font-size="14">Parent</text>`;
-      svg.innerHTML += `<text x="${pad}" y="${pad+10}" fill="#b58900" font-size="14">Daughter</text>`;
-      svg.innerHTML += `<text x="${W/2}" y="${H-5}" text-anchor="middle" fill="#073642" font-size="12">Time (${unit})</text>`;
-      svg.innerHTML += `<text x="${pad-10}" y="${H/2}" text-anchor="end" fill="#073642" font-size="12" transform="rotate(-90,${pad-10},${H/2})">Activity (MBq)</text>`;
-    });
-    // ============================================================================
-    // Isotope Dropdowns
+    // --- Isotope Dropdowns ---
     // Ensure all isotope dropdowns are cleared before populating
-    isotopeSelect.innerHTML = '';
-    doseIsotopeSelect.innerHTML = '';
-    reverseIsotopeSelect.innerHTML = '';
-    shieldingIsotopeSelect.innerHTML = '';
-    unshieldedIsoSelect.innerHTML = '';
-    Object.keys(isotopes).forEach(key => {
-      const option1 = document.createElement('option');
-      option1.value = key;
-      option1.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      isotopeSelect.appendChild(option1);
-      const option2 = document.createElement('option');
-      option2.value = key;
-      option2.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
-      doseIsotopeSelect.appendChild(option2);
-      const option3 = document.createElement('option');
-      option3.value = key;
-      option3.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      reverseIsotopeSelect.appendChild(option3);
-      const option4 = document.createElement('option');
-      option4.value = key;
-      option4.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      shieldingIsotopeSelect.appendChild(option4);
-      const option5 = document.createElement('option');
-      option5.value = key;
-      option5.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
-      unshieldedIsoSelect.appendChild(option5);
-    });
+    // Get all dropdowns at the top, only once
+    // Remove duplicate declarations below
+    // Populate all isotope dropdowns
+    function populateIsotopeDropdowns() {
+      isotopeSelect.innerHTML = '';
+      doseIsotopeSelect.innerHTML = '';
+      reverseIsotopeSelect.innerHTML = '';
+      shieldingIsotopeSelect.innerHTML = '';
+      unshieldedIsoSelect.innerHTML = '';
+      Object.keys(isotopes).forEach(key => {
+        const option1 = document.createElement('option');
+        option1.value = key;
+        option1.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+        isotopeSelect.appendChild(option1);
+        const option2 = document.createElement('option');
+        option2.value = key;
+        option2.text = `${key} (${isotopes[key].doseConstant} μSv·m²/MBq·h)`;
+        doseIsotopeSelect.appendChild(option2);
+        const option3 = document.createElement('option');
+        option3.value = key;
+        option3.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+        reverseIsotopeSelect.appendChild(option3);
+        const option4 = document.createElement('option');
+        option4.value = key;
+        option4.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+        shieldingIsotopeSelect.appendChild(option4);
+        const option5 = document.createElement('option');
+        option5.value = key;
+        option5.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+        unshieldedIsoSelect.appendChild(option5);
+      });
+    }
+    // Call this function once after all dropdowns are defined
+    populateIsotopeDropdowns();
+
     // ============================================================================
     // Event Handler: Radioactive Decay Calculation
     // ============================================================================
