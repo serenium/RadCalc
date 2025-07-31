@@ -373,6 +373,7 @@
     // ============================================================================
     // --- Radioisotope Data: half-lives, dose constants, and gamma energies
     const isotopes = {
+      "Mo-99":  { halfLife: 65.94,    doseConstant: 0.13,  energy: 740 },
       "C-11":   { halfLife: 0.34,     doseConstant: 0.055, energy: 511 },
       "O-15":   { halfLife: 0.0338,   doseConstant: 0.307, energy: 511 },
       "F-18":   { halfLife: 1.83,     doseConstant: 0.143, energy: 511 },
@@ -564,6 +565,13 @@
     // ============================================================================
     // Populate Isotope Dropdowns
     // Decay Chain Calculator Logic
+    // Decay chain map: parent -> daughter
+    const decayChainMap = {
+      "Mo-99": "Tc-99m",
+      "Rb-81": "Kr-81m",
+      // Add more chains as needed
+    };
+
     // Populate parent/daughter dropdowns
     const chainParentSelect = document.getElementById('chain-parent');
     const chainDaughterSelect = document.getElementById('chain-daughter');
@@ -576,6 +584,14 @@
       optionD.value = key;
       optionD.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
       chainDaughterSelect.appendChild(optionD);
+    });
+
+    // Auto-select daughter when parent changes
+    chainParentSelect.addEventListener('change', () => {
+      const parent = chainParentSelect.value;
+      if (decayChainMap[parent]) {
+        chainDaughterSelect.value = decayChainMap[parent];
+      }
     });
 
     // Chain calculation and graphing
