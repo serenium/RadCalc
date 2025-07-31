@@ -608,6 +608,16 @@
       unshieldedIsoSelect.appendChild(option);
     });
 
+    // Populate material dropdown for unshielded estimator
+    const unshieldedMaterialSelect = document.getElementById('unshielded-material');
+    unshieldedMaterialSelect.innerHTML = '';
+    Object.keys(attenuationData).forEach(material => {
+      const opt = document.createElement('option');
+      opt.value = material;
+      opt.text = material.charAt(0).toUpperCase() + material.slice(1);
+      unshieldedMaterialSelect.appendChild(opt);
+    });
+
     // Synchronize isotope selection with other calculators
     function syncIsotopes(selected) {
       [isotopeSelect, doseIsotopeSelect, reverseIsotopeSelect, shieldingIsotopeSelect, unshieldedIsoSelect].forEach(sel => {
@@ -637,7 +647,7 @@
     });
 
     // Populate material dropdown for estimator
-    const unshieldedMaterialSelect = document.getElementById('unshielded-material');
+    // (Already declared above, so just populate if needed)
     Object.keys(attenuationData).forEach(material => {
       const opt = document.createElement('option');
       opt.value = material;
