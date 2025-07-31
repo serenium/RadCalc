@@ -137,6 +137,7 @@
         <option value="shielding">Shielding Thickness</option>
         <option value="conversion">Unit Conversion</option>
         <option value="patient">Patient Effective Dose</option>
+        <option value="chain">Decay Chain</option>
       </select>
     </header>
 
@@ -249,6 +250,31 @@
 
     <!-- ========================================================================= -->
     <!-- Shielding Thickness Calculator Section                                    -->
+    <!-- ========================================================================= -->
+    <!-- Decay Chain Calculator Section                                            -->
+    <!-- ========================================================================= -->
+    <section id="chain-container" class="card" style="display:none;">
+      <h1>Decay Chain Calculator</h1>
+      <form id="chain-form">
+        <label for="chain-parent">Parent Isotope:</label>
+        <select id="chain-parent" required></select>
+        <label for="chain-daughter">Daughter Isotope:</label>
+        <select id="chain-daughter" required></select>
+        <label for="chain-activity">Initial Parent Activity (MBq):</label>
+        <input type="number" id="chain-activity" inputmode="numeric" pattern="[0-9]*" required />
+        <label for="chain-time">Time Elapsed:</label>
+        <input type="number" id="chain-time" inputmode="numeric" pattern="[0-9]*" required />
+        <label for="chain-time-unit">Time Unit:</label>
+        <select id="chain-time-unit" required>
+          <option value="hours" selected>Hours</option>
+          <option value="minutes">Minutes</option>
+          <option value="days">Days</option>
+        </select>
+        <button type="submit">Calculate Chain</button>
+      </form>
+      <div id="chain-result"></div>
+      <svg id="chain-graph" width="100%" height="300" style="background:#fdf6e3; margin-top:1rem;"></svg>
+    </section>
     <!-- ========================================================================= -->
     <section id="shielding-container" class="card" style="display:none;">
       <h1>Shielding Thickness Calculator</h1>
@@ -453,6 +479,7 @@
       document.getElementById('shielding-container').style.display = name === 'shielding' ? 'block' : 'none';
       document.getElementById('conversion-container').style.display = name === 'conversion' ? 'block' : 'none';
       document.getElementById('patient-container').style.display = name === 'patient' ? 'block' : 'none';
+      document.getElementById('chain-container').style.display = name === 'chain' ? 'block' : 'none';
       localStorage.setItem('lastCalculator', name);
     }
 
@@ -536,6 +563,105 @@
 
     // ============================================================================
     // Populate Isotope Dropdowns
+    // Decay Chain Calculator Logic
+    // Populate parent/daughter dropdowns
+    const chainParentSelect = document.getElementById('chain-parent');
+    const chainDaughterSelect = document.getElementById('chain-daughter');
+    Object.keys(isotopes).forEach(key => {
+      const optionP = document.createElement('option');
+      optionP.value = key;
+      optionP.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      chainParentSelect.appendChild(optionP);
+      const optionD = document.createElement('option');
+      optionD.value = key;
+      optionD.text = `${key} (${formatHalfLife(isotopes[key].halfLife)})`;
+      chainDaughterSelect.appendChild(optionD);
+    });
+
+    // Chain calculation and graphing
+    document.getElementById('chain-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const parentIso = chainParentSelect.value;
+      const daughterIso = chainDaughterSelect.value;
+      const A0 = parseFloat(document.getElementById('chain-activity').value);
+      let t = parseFloat(document.getElementById('chain-time').value);
+      const unit = document.getElementById('chain-time-unit').value;
+      if (unit === 'minutes') t /= 60;
+      else if (unit === 'days') t *= 24;
+      if (!parentIso || !daughterIso || isNaN(A0) || isNaN(t) || parentIso === daughterIso) {
+        document.getElementById('chain-result').innerText = "Please select different isotopes and enter valid values.";
+        document.getElementById('chain-graph').innerHTML = '';
+        return;
+      }
+      const T1 = isotopes[parentIso].halfLife;
+      const T2 = isotopes[daughterIso].halfLife;
+      const lambda1 = Math.log(2) / T1;
+      const lambda2 = Math.log(2) / T2;
+      // Bateman equations for two-member chain
+      function parentActivity(A0, t) {
+        return A0 * Math.exp(-lambda1 * t);
+      }
+      function daughterActivity(A0, t) {
+        if (lambda1 === lambda2) {
+          // Special case: equal decay constants
+          return A0 * lambda1 * t * Math.exp(-lambda1 * t);
+        }
+        return A0 * (lambda2/(lambda2-lambda1)) * (Math.exp(-lambda1*t) - Math.exp(-lambda2*t));
+      }
+      // Calculate time to equilibrium (when dA_daughter/dt ~ 0)
+      let tEq = Math.log(lambda2/(lambda2-lambda1))/lambda1;
+      if (!isFinite(tEq) || tEq < 0) tEq = null;
+      // Calculate activities at t
+      const Ap = parentActivity(A0, t);
+      const Ad = daughterActivity(A0, t);
+      let eqText = tEq ? `Approximate time to equilibrium: ${tEq.toFixed(2)} h` : 'Equilibrium not reached.';
+      document.getElementById('chain-result').innerText =
+        `Parent activity at t: ${Ap.toFixed(3)} MBq\nDaughter activity at t: ${Ad.toFixed(3)} MBq\n${eqText}`;
+
+      // Graphing
+      const svg = document.getElementById('chain-graph');
+      svg.innerHTML = '';
+      const W = svg.clientWidth || 600;
+      const H = svg.clientHeight || 300;
+      const N = 100;
+      let maxA = 0;
+      const times = [], ApArr = [], AdArr = [];
+      for (let i = 0; i <= N; ++i) {
+        const tt = t * i / N;
+        const ap = parentActivity(A0, tt);
+        const ad = daughterActivity(A0, tt);
+        times.push(tt);
+        ApArr.push(ap);
+        AdArr.push(ad);
+        maxA = Math.max(maxA, ap, ad);
+      }
+      // Axes
+      const pad = 40;
+      svg.innerHTML += `<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#073642" stroke-width="2" />`;
+      svg.innerHTML += `<line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" stroke="#073642" stroke-width="2" />`;
+      // Parent curve
+      let pathP = '';
+      for (let i = 0; i <= N; ++i) {
+        const x = pad + (W-2*pad) * (times[i]/t);
+        const y = H-pad - (H-2*pad) * (ApArr[i]/maxA);
+        pathP += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
+      }
+      svg.innerHTML += `<path d="${pathP}" fill="none" stroke="#004665" stroke-width="2" />`;
+      // Daughter curve
+      let pathD = '';
+      for (let i = 0; i <= N; ++i) {
+        const x = pad + (W-2*pad) * (times[i]/t);
+        const y = H-pad - (H-2*pad) * (AdArr[i]/maxA);
+        pathD += i === 0 ? `M${x},${y}` : ` L${x},${y}`;
+      }
+      svg.innerHTML += `<path d="${pathD}" fill="none" stroke="#b58900" stroke-width="2" />`;
+      // Labels
+      svg.innerHTML += `<text x="${W/2}" y="${pad-10}" text-anchor="middle" fill="#073642" font-size="16">Activity vs Time</text>`;
+      svg.innerHTML += `<text x="${pad}" y="${pad-10}" fill="#004665" font-size="14">Parent</text>`;
+      svg.innerHTML += `<text x="${pad}" y="${pad+10}" fill="#b58900" font-size="14">Daughter</text>`;
+      svg.innerHTML += `<text x="${W/2}" y="${H-5}" text-anchor="middle" fill="#073642" font-size="12">Time (${unit})</text>`;
+      svg.innerHTML += `<text x="${pad-10}" y="${H/2}" text-anchor="end" fill="#073642" font-size="12" transform="rotate(-90,${pad-10},${H/2})">Activity (MBq)</text>`;
+    });
     // ============================================================================
     const isotopeSelect = document.getElementById('isotope');
     Object.keys(isotopes).forEach(key => {
