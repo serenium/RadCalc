@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { ISOTOPES, Isotope } from '../decay-calc/isotopes';
+
 import { styles as sharedStyles } from '../../styles/shared-styles';
 
 @customElement('reverse-decay-calc')
@@ -55,7 +56,7 @@ export class ReverseDecayCalc extends LitElement {
   private get halfLifeInSelectedUnit(): number {
     const { halfLife, halfLifeUnit } = this._selectedIsotope;
     // Convert isotope half-life to selected time unit
-    const unitMap = { minutes: 1, hours: 60, days: 1440 };
+    const unitMap = { seconds: 1/60, minutes: 1, hours: 60, days: 1440 };
     return halfLife * (unitMap[halfLifeUnit] / unitMap[this.timeUnit]);
   }
 
@@ -106,7 +107,7 @@ export class ReverseDecayCalc extends LitElement {
           <div class="form-row">
             <label for="isotope">Isotope</label>
             <select id="isotope" @change=${this.handleIsotopeChange}>
-              ${ISOTOPES.map((iso) => html`
+              ${[...ISOTOPES].sort((a, b) => a.atomicNumber - b.atomicNumber).map((iso) => html`
                 <option ?selected=${this._selectedIsotope.symbol === iso.symbol}>
                   ${iso.name} (${iso.symbol})
                 </option>
