@@ -14,6 +14,28 @@ import { title } from '@thepassle/app-tools/router/plugins/title.js';
 
 import './pages/app-home.js';
 
+
+// Shared isotope state key
+const SHARED_ISOTOPE_KEY = 'shared.selectedIsotope';
+
+function getSharedIsotope(): string {
+  return localStorage.getItem(SHARED_ISOTOPE_KEY) || '';
+}
+
+function setSharedIsotope(isotope: string) {
+  localStorage.setItem(SHARED_ISOTOPE_KEY, isotope);
+}
+
+// Listen for isotope-change events from calculators and update shared state
+function onIsotopeChange(e: CustomEvent) {
+  if (e && e.detail && e.detail.isotope) {
+    setSharedIsotope(e.detail.isotope);
+  }
+}
+
+
+
+
 const baseURL: string = (import.meta as any).env.BASE_URL;
 
 export const router = new Router({
@@ -37,7 +59,10 @@ export const router = new Router({
         plugins: [
           lazy(() => import('./pages/decay-calc/decay-calc.js')),
         ],
-        render: () => html`<decay-calc></decay-calc>`
+        render: () => {
+          const selectedIsotope = getSharedIsotope();
+          return html`<decay-calc .selectedIsotope=${selectedIsotope} @isotope-change=${onIsotopeChange}></decay-calc>`;
+        }
       },
       {
         path: resolveRouterPath('unit-convert'),
@@ -45,15 +70,22 @@ export const router = new Router({
         plugins: [
           lazy(() => import('./pages/unit-convert/unit-convert.js')),
         ],
-        render: () => html`<unit-convert></unit-convert>`
+        render: () => {
+          const selectedIsotope = getSharedIsotope();
+          return html`<unit-convert .selectedIsotope=${selectedIsotope} @isotope-change=${onIsotopeChange}></unit-convert>`;
+        }
       },
+
       {
         path: resolveRouterPath('reverse-decay-calc'),
         title: 'Reverse Decay Calculator',
         plugins: [
           lazy(() => import('./pages/reverse-decay-calc/reverse-decay-calc.js')),
         ],
-        render: () => html`<reverse-decay-calc></reverse-decay-calc>`
+        render: () => {
+          const selectedIsotope = getSharedIsotope();
+          return html`<reverse-decay-calc .selectedIsotope=${selectedIsotope} @isotope-change=${onIsotopeChange}></reverse-decay-calc>`;
+        }
       }
     ]
   });

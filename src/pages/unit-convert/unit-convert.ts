@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, state, property } from 'lit/decorators.js';
 import { UNITS, UnitCategory, UnitDef } from './units';
 import { styles as sharedStyles } from '../../styles/shared-styles';
 
@@ -29,7 +29,18 @@ export class UnitConvert extends LitElement {
     `
   ];
 
+  @property({ type: String }) selectedIsotope: string = '';
   @state() private category: UnitCategory = 'activity';
+  // Optionally, allow isotope sync for activity conversions (future-proof)
+  private handleIsotopeChange(e: Event) {
+    const symbol = (e.target as HTMLSelectElement).value;
+    this.selectedIsotope = symbol;
+    this.dispatchEvent(new CustomEvent('isotope-change', {
+      detail: { isotope: symbol },
+      bubbles: true,
+      composed: true
+    }));
+  }
   @state() private fromUnit: UnitDef = UNITS.find(u => u.category === 'activity')!;
   @state() private toUnit: UnitDef = UNITS.find(u => u.category === 'activity' && u.symbol !== 'Bq')!;
   @state() private inputValue: number = 0;
@@ -115,6 +126,18 @@ export class UnitConvert extends LitElement {
               <option value="dose" ?selected=${this.category==='dose'}>Dose</option>
             </select>
           </div>
+          <!-- Isotope selector for activity category (optional, for sync) -->
+          ${this.category === 'activity' ? html`
+            <div class="form-row">
+              <label for="isotope">Isotope (sync only)</label>
+              <select id="isotope" @change=${this.handleIsotopeChange}>
+                <option value="">(none)</option>
+                ${['Tc-99m','F-18','I-131','Ga-68','Co-57','Cs-137','Ge-68'].map(symbol => html`
+                  <option value="${symbol}" ?selected=${this.selectedIsotope === symbol}>${symbol}</option>
+                `)}
+              </select>
+            </div>
+          ` : ''}
           <div class="form-row">
             <label for="fromUnit">From</label>
             <select id="fromUnit" @change=${this.handleFromUnitChange}>

@@ -74,18 +74,32 @@ export class AppHome extends LitElement {
 
   @property({ type: Boolean }) sidebarOpen = false;
 
+  // Key for localStorage
+  private static readonly SIDEBAR_STATE_KEY = 'app-home.sidebarOpen';
+
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('sidebar-toggle', this.openSidebar as EventListener);
     this.addEventListener('sidebar-close', this.closeSidebar as EventListener);
+    // Restore sidebar state
+    const saved = localStorage.getItem(AppHome.SIDEBAR_STATE_KEY);
+    if (saved !== null) {
+      this.sidebarOpen = saved === 'true';
+    }
   }
   disconnectedCallback() {
     this.removeEventListener('sidebar-toggle', this.openSidebar as EventListener);
     this.removeEventListener('sidebar-close', this.closeSidebar as EventListener);
     super.disconnectedCallback();
   }
-  openSidebar = () => { this.sidebarOpen = true; };
-  closeSidebar = () => { this.sidebarOpen = false; };
+  openSidebar = () => {
+    this.sidebarOpen = true;
+    localStorage.setItem(AppHome.SIDEBAR_STATE_KEY, 'true');
+  };
+  closeSidebar = () => {
+    this.sidebarOpen = false;
+    localStorage.setItem(AppHome.SIDEBAR_STATE_KEY, 'false');
+  };
 
   render() {
     return html`
