@@ -30,6 +30,22 @@ export const router = new Router({
           lazy(() => import('./pages/app-about/app-about.js')),
         ],
         render: () => html`<app-about></app-about>`
+      },
+      {
+        path: resolveRouterPath('decay-calc'),
+        title: 'Decay Calculator',
+        plugins: [
+          lazy(() => import('./pages/decay-calc/decay-calc.js')),
+        ],
+        render: () => html`<decay-calc></decay-calc>`
+      },
+      {
+        path: resolveRouterPath('unit-convert'),
+        title: 'Unit Converter',
+        plugins: [
+          lazy(() => import('./pages/unit-convert/unit-convert.js')),
+        ],
+        render: () => html`<unit-convert></unit-convert>`
       }
     ]
   });
