@@ -1,3 +1,10 @@
+
+# RadCalc
+
+RadCalc is a radiation safety and nuclear medicine related calculator app for mobile for keeping hnady for quick checks or calculations required on the job. It's a PWA Builder app. PWA Starter readme is below, keep for reference until app is more mature.
+
+
+
 # PWA Starter
 
 [**Straight to Full Documentation**](https://docs.pwabuilder.com/#/starter/quick-start)
