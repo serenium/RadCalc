@@ -77,6 +77,14 @@ export const router = new Router({
       },
 
       {
+        path: resolveRouterPath('activity-dose-calc'),
+        title: 'Activity ↔ Dose Calculator',
+        plugins: [
+          lazy(() => import('./pages/activity-dose-calc/activity-dose-calc.js')),
+        ],
+        render: () => html`<activity-dose-calc></activity-dose-calc>`
+      },
+      {
         path: resolveRouterPath('reverse-decay-calc'),
         title: 'Reverse Decay Calculator',
         plugins: [

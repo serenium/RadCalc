@@ -81,7 +81,7 @@ export class AppSidebar extends LitElement {
     { name: 'Decay Calculator', path: 'decay-calc' },
     { name: 'Reverse Decay Calculator', path: 'reverse-decay-calc' },
     { name: 'Unit Converter', path: 'unit-convert' },
-    // Add more calculators here as needed
+    { name: 'Activity↔Dose Calculator', path: 'activity-dose-calc' },
   ];
 
   private closeSidebar() {
