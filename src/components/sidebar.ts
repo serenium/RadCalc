@@ -79,6 +79,7 @@ export class AppSidebar extends LitElement {
 
   private calculators = [
     { name: 'Decay Calculator', path: 'decay-calc' },
+    { name: 'Reverse Decay Calculator', path: 'reverse-decay-calc' },
     { name: 'Unit Converter', path: 'unit-convert' },
     // Add more calculators here as needed
   ];

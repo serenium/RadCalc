@@ -46,6 +46,14 @@ export const router = new Router({
           lazy(() => import('./pages/unit-convert/unit-convert.js')),
         ],
         render: () => html`<unit-convert></unit-convert>`
+      },
+      {
+        path: resolveRouterPath('reverse-decay-calc'),
+        title: 'Reverse Decay Calculator',
+        plugins: [
+          lazy(() => import('./pages/reverse-decay-calc/reverse-decay-calc.js')),
+        ],
+        render: () => html`<reverse-decay-calc></reverse-decay-calc>`
       }
     ]
   });
